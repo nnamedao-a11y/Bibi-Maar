@@ -323,6 +323,22 @@ const Layout = () => {
       roles: ['master_admin', 'admin', 'team_lead', 'manager']
     },
     {
+      // Top Deals of the Week — manager-curated homepage wishlist
+      // builder. Cards go to team-lead for approval.
+      id: 'managerWishlist',
+      type: 'single',
+      item: { path: '/manager/wishlist', icon: Fire, labelKey: 'topDealsBuilder' },
+      roles: ['master_admin', 'admin', 'team_lead', 'manager']
+    },
+    {
+      // Team-lead approval queue for the wishlist cards above.
+      // Only team_lead + admin see this entry.
+      id: 'teamWishlistApprovals',
+      type: 'single',
+      item: { path: '/team/wishlist-approvals', icon: Lightning, labelKey: 'topDealsApprovals' },
+      roles: ['master_admin', 'admin', 'team_lead']
+    },
+    {
       id: 'control',
       type: 'single',
       // Control is a hub. The page itself renders a horizontal sub-nav at

@@ -134,6 +134,8 @@ import ManagerWorkspacePage from './pages/manager/ManagerWorkspacePage';
 import ManagerShipmentsPage from './pages/manager/ManagerShipmentsPage';
 import UniversalTrackerPage from './pages/manager/UniversalTrackerPage';
 import ManagerEngagementPage from './pages/manager/ManagerEngagementPage';
+import ManagerWishlistPage from './pages/manager/ManagerWishlistPage';
+import TeamWishlistApprovalsPage from './pages/team/TeamWishlistApprovalsPage';
 
 import NotificationsPage from './pages/NotificationsPage';
 import ParserTestLab from './pages/ParserTestLab';
@@ -530,6 +532,7 @@ function App() {
               <Route path="alerts" element={<TeamAlertsPage />} />
               <Route path="performance" element={<TeamPerformancePage />} />
               <Route path="orders" element={<TeamOrdersPage />} />
+              <Route path="wishlist-approvals" element={<TeamWishlistApprovalsPage />} />
             </Route>
 
             {/* ====== MANAGER WORKSPACE ====== */}
@@ -543,6 +546,7 @@ function App() {
               <Route path="shipments" element={<ManagerShipmentsPage />} />
               <Route path="tracking" element={<UniversalTrackerPage />} />
               <Route path="engagement" element={<ManagerEngagementPage />} />
+              <Route path="wishlist" element={<ManagerWishlistPage />} />
             </Route>
 
             {/* ====== CUSTOMER CABINET (CLIENT PORTAL) ====== */}

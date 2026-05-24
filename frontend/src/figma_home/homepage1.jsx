@@ -17,6 +17,7 @@ import FrameComponent26 from "./components/frame-component26";
 import FrameComponent27 from "./components/frame-component27";
 import FrameComponent28 from "./components/frame-component28";
 import { useLang } from "../i18n";
+import { useCallback, useState } from "react";
 import AnimatedHeading from "../components/AnimatedHeading";
 // NOTE: Header1 / Footer1 are NOT imported here anymore. They are rendered
 // once at the route-layout level (`PublicLayout` / `<BibiHeader/>`/<BibiFooter/>)
@@ -39,6 +40,19 @@ const T = {
 const Homepage1 = ()=> {
   const { lang } = useLang();
   const t = lang === "bg" ? T.bg : T.en;
+  // Shared filter state between FrameComponent20 (filter bar) and
+  // FrameComponent21 (curated wishlist cards). Default to "sedan" +
+  // "10-15K" so the first paint matches the visual default.
+  const [dealsCategory, setDealsCategory] = useState("sedan");
+  const [dealsBudget, setDealsBudget] = useState("10-15K");
+  // Live count of curated picks rendered in the grid — mirrors into
+  // the "PROPOSALS - n" counter on the filter row.
+  const [dealsCount, setDealsCount] = useState(null);
+  const handleDealsFilterChange = useCallback(({ vehicleId, tier }) => {
+    if (vehicleId) setDealsCategory(vehicleId);
+    if (tier) setDealsBudget(tier);
+  }, []);
+  const handleDealsCount = useCallback((n) => setDealsCount(n), []);
   return (
     <div className={styles.homepage}>
       <img         className={styles.image57Icon}
@@ -75,8 +89,15 @@ const Homepage1 = ()=> {
       <section className={styles.rectangleParent}>
         <div className={styles.frameChild} />
         <VehicleDeals1 />
-        <FrameComponent20 />
-        <FrameComponent21 />
+        <FrameComponent20
+          onChange={handleDealsFilterChange}
+          countOverride={dealsCount}
+        />
+        <FrameComponent21
+          category={dealsCategory}
+          budget={dealsBudget}
+          onCount={handleDealsCount}
+        />
       </section>
       <FrameComponent22 />
       <img         className={styles.lineiconsaudi}

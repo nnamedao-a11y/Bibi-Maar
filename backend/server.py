@@ -2933,6 +2933,14 @@ async def _main_startup():
     except Exception as e:
         logger.warning(f"[STARTUP] payments indexes failed: {e}")
 
+    # ─── Wishlist deals (Top deals of the week) indexes ────────────────
+    try:
+        from app.routers import wishlist_deals as _wld
+        await _wld.ensure_indexes()
+        logger.info("[STARTUP] ✓ wishlist_deals indexes ensured")
+    except Exception as e:
+        logger.warning(f"[STARTUP] wishlist_deals indexes failed: {e}")
+
     # ─── Phase 5.4 / C-3A — Google ClientID one-time backfill ───────────
     # If `app_settings.auth.google.clientId` is empty AND the legacy
     # `integration_configs.{provider:"google_oauth"}.credentials.clientId`
@@ -3808,6 +3816,20 @@ try:
                 sum(1 for _ in _manager_engagement_mod.router.routes))
 except Exception as _e:
     logger.exception("[manager_engagement] failed to mount router: %s", _e)
+
+try:
+    from app.routers import wishlist_deals as _wishlist_deals_mod
+    fastapi_app.include_router(_wishlist_deals_mod.public_router)
+    fastapi_app.include_router(_wishlist_deals_mod.manager_router)
+    fastapi_app.include_router(_wishlist_deals_mod.team_lead_router)
+    logger.info(
+        "[wishlist_deals] routers mounted: public=%d, manager=%d, team_lead=%d",
+        sum(1 for _ in _wishlist_deals_mod.public_router.routes),
+        sum(1 for _ in _wishlist_deals_mod.manager_router.routes),
+        sum(1 for _ in _wishlist_deals_mod.team_lead_router.routes),
+    )
+except Exception as _e:
+    logger.exception("[wishlist_deals] failed to mount routers: %s", _e)
 
 try:
     from app.routers import admin_overview as _admin_overview_mod

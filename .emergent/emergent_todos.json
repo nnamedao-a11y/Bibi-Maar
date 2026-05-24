@@ -1,42 +1,42 @@
 [
   {
-    "content": "Bug fix: FavoritesPage CTA — /vehicles → /catalog",
+    "content": "Backend: create app/routers/wishlist_deals.py with public, manager, team-lead endpoints",
     "status": "completed"
   },
   {
-    "content": "Create backend router manager_engagement.py (5 read-only endpoints, require_manager_or_admin)",
+    "content": "Backend: mount wishlist_deals router in server.py + ensure indexes on wishlist_deals collection",
     "status": "completed"
   },
   {
-    "content": "Mount manager_engagement router in server.py",
+    "content": "Backend: smoke-test all endpoints (public read, manager create/list/delete, team-lead bulk-approve)",
     "status": "completed"
   },
   {
-    "content": "Create frontend ManagerEngagementPage.jsx (KPIs, VIN lookup, top users, top vehicles, customer drill-down modal)",
+    "content": "Frontend: refactor FrameComponent21 to fetch from /api/public/wishlist-deals using selected category+budget",
     "status": "completed"
   },
   {
-    "content": "Wire /manager/engagement route in App.js",
+    "content": "Frontend: change MORE VEHICLES + button → Link to /catalog with vehicle_type+price_min+price_max",
     "status": "completed"
   },
   {
-    "content": "Add 'User Engagement' sidebar entry for manager role in Layout.js",
+    "content": "Frontend: wire FrameComponent20 onChange to shared state on homepage1.jsx so filter bar drives FrameComponent21",
     "status": "completed"
   },
   {
-    "content": "Add User Engagement CTA card on ManagerWorkspacePage dashboard",
+    "content": "Frontend: create /manager/wishlist page (form + own list) with VIN autocomplete",
     "status": "completed"
   },
   {
-    "content": "Restart backend, verify routes mount (5 routes log line confirmed)",
+    "content": "Frontend: create /team/wishlist-approvals page (table + select-all + bulk approve/reject)",
     "status": "completed"
   },
   {
-    "content": "Smoke test: 5/5 endpoints return 200 with manager token, 401 without",
+    "content": "Frontend: wire routes in App.js + add sidebar entries in Layout.js (manager + team_lead roles)",
     "status": "completed"
   },
   {
-    "content": "Visual verification: manager logged in, page renders with sidebar + KPIs + tabs + customer row",
+    "content": "Verified end-to-end: van/10-15K filter renders 1 curated card, MORE VEHICLES → /catalog?vehicle_type=van&price_min=10000&price_max=15000, manager builder + team_lead approvals both functional",
     "status": "completed"
   }
 ]

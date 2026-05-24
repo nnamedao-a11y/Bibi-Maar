@@ -1,20 +1,24 @@
 /**
- * FrameComponent21 — "Top vehicles deals of the week" cards grid.
+ * FrameComponent21 — "Top vehicles deals of the week" curated wishlist.
  *
- * Phase B1 — Frontend pagination + cache hardening
- * ------------------------------------------------
- *   • `offset` → `skip` (backend reads `skip`; `offset` was silently dropped
- *     so every "More vehicles +" used to return the same first 6 cards).
- *   • Pagination is **accumulating** — each page is its own React Query
- *     cache entry; we slice `(0 … loadedPages × PAGE_SIZE)` for render.
- *   • One QueryClient at root means back-navigation re-uses the cached
- *     pages without re-hitting the network for 5 minutes.
- *   • All card thumbnails go through `optimizeImage()` via the downstream
- *     `<Card1>` component (already wrapped — see card1.jsx).
+ * Re-engineered (May 2026): the block no longer paginates the FULL
+ * `/api/public/vehicles` catalogue. Instead it surfaces a manager-
+ * curated, team-lead-approved weekly wishlist read from
+ * `/api/public/wishlist-deals?category=…&budget=…&week=current`.
+ *
+ * Props:
+ *   - `category`   — one of motorbike|sedan|suv|pickup|van (from FrameComponent20)
+ *   - `budget`     — one of 10-15K|15-25K|30-50K        (from FrameComponent20)
+ *   - `onCount`    — optional callback fired with the live count so the
+ *                    filter row's "proposals" counter can mirror it.
+ *
+ * "MORE VEHICLES +" no longer paginates within the section — it links to
+ * the full /catalog page so users can browse beyond the curated set.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import { Link } from "react-router-dom";
 import Card1 from "./card1";
 import { userEngagementApi } from "../../lib/api";
 import { useTiltParallax } from "../../components/useTiltParallax";
@@ -33,68 +37,74 @@ const PLACEHOLDER_IMGS = [
   "/figma/image-155@2x.webp",
 ];
 
-const FrameComponent21 = ({ className = "" }) => {
-  // Welcome page is backed by the full /api/public/vehicles catalogue.
-  // Start at 6 cards (2 rows × 3 cols), load 6 more per "MORE VEHICLES +".
-  const PAGE_SIZE = 6;
-  const [loadedPages, setLoadedPages] = useState(1);
+/**
+ * Adapt a wishlist row (with cached `snapshot`) into the shape Card1
+ * expects. Card1 reads top-level fields like vin/title/year/make/model
+ * /current_bid/images so we flatten the snapshot up to the root.
+ */
+function wishlistToCard(item) {
+  const s = item?.snapshot || {};
+  return {
+    vin: item.vin,
+    id: item.id,
+    title: s.title,
+    make: s.make,
+    model: s.model,
+    year: s.year,
+    current_bid: s.current_bid,
+    odometer: s.odometer,
+    odometer_unit: s.odometer_unit,
+    images: s.image ? [s.image] : [],
+    detail_url: s.detail_url,
+    auction_name: s.auction_name,
+    sale_date: s.sale_date,
+    lot_number: s.lot_number,
+    // pass-through so the card knows this is a curated deal
+    wishlist: {
+      category: item.category,
+      budget: item.budget,
+      week_start: item.week_start,
+      note: item.note,
+    },
+  };
+}
+
+const FrameComponent21 = ({ className = "", category, budget, onCount }) => {
   const { lang } = useLang();
   const isBg = lang === "bg";
-  const queryClient = useQueryClient();
 
   // Selection sets propagated to Card1
   const [favSet, setFavSet] = useState(new Set());
   const [cmpSet, setCmpSet] = useState(new Set());
   const [cmpCount, setCmpCount] = useState(0);
 
-  // Phase B1 — Per-page React Query: one cache entry per page so back-nav
-  // and re-mount don't refetch already-seen pages.
-  const pageQueries = [];
-  for (let p = 1; p <= loadedPages; p++) {
-    pageQueries.push(p);
-  }
-
-  // Active page query — only the current "tip" page actually has
-  // `enabled=true` for fetching; earlier pages are read from cache.
-  const currentPageQ = useQuery({
-    queryKey: ["welcome/vehicles", { limit: PAGE_SIZE, skip: (loadedPages - 1) * PAGE_SIZE }],
+  // Pull current-week approved curated cards filtered by the selected
+  // category + budget (or all if filters not supplied).
+  const dealsQ = useQuery({
+    queryKey: ["public/wishlist-deals", { category, budget }],
     queryFn: async ({ signal }) => {
-      const skip = (loadedPages - 1) * PAGE_SIZE;
-      const { data } = await axios.get(`${API}/api/public/vehicles`, {
-        params: { limit: PAGE_SIZE, skip },
-        signal,
-        timeout: 18000,
+      const params = { week: "current", limit: 60 };
+      if (category) params.category = category;
+      if (budget) params.budget = budget;
+      const { data } = await axios.get(`${API}/api/public/wishlist-deals`, {
+        params, signal, timeout: 15000,
       });
-      return {
-        items: Array.isArray(data?.data) ? data.data : Array.isArray(data?.items) ? data.items : [],
-        total: Number.isFinite(data?.total) ? Number(data.total) : 0,
-      };
+      const list = Array.isArray(data?.data) ? data.data : [];
+      return { items: list.map(wishlistToCard), raw: list };
     },
     placeholderData: (prev) => prev,
+    staleTime: 60_000,
   });
 
-  // Merge all loaded pages (1…loadedPages) into a single ordered list.
-  // Earlier pages come straight from the React Query cache (no refetch).
-  const items = useMemo(() => {
-    const acc = [];
-    for (let p = 1; p <= loadedPages; p++) {
-      const cached = queryClient.getQueryData([
-        "welcome/vehicles",
-        { limit: PAGE_SIZE, skip: (p - 1) * PAGE_SIZE },
-      ]);
-      if (cached?.items?.length) acc.push(...cached.items);
-    }
-    return acc;
-  }, [loadedPages, currentPageQ.data, queryClient]);
+  const items = dealsQ.data?.items || [];
+  const loadingMore = dealsQ.isFetching;
+  const total = items.length;
 
-  const total = currentPageQ.data?.total || 0;
-  const loadingMore = currentPageQ.isFetching;
-  const error = currentPageQ.isError ? (currentPageQ.error?.message || "fetch failed") : null;
-
-  const onLoadMore = useCallback(() => {
-    if (loadingMore) return;
-    setLoadedPages((p) => p + 1);
-  }, [loadingMore]);
+  // Tell the parent (FrameComponent20) the live count so its
+  // "PROPOSALS - n" counter matches what's actually rendered.
+  useEffect(() => {
+    if (typeof onCount === "function") onCount(total);
+  }, [total, onCount]);
 
   /* ── Load favorites + compare once (silent on guest) ─────────────── */
   const loadEngagement = useCallback(async () => {
@@ -139,36 +149,59 @@ const FrameComponent21 = ({ className = "" }) => {
 
   /* ── Build rows ───────────────────────────────────────────────────── */
   const live = items.length > 0 ? items : null;
-  const visibleCount = live ? live.length : 6;
-  const rows = [];
-  if (live) {
-    for (let i = 0; i < live.length; i += 3) rows.push(live.slice(i, i + 3));
-  } else {
-    rows.push([0, 1, 2]);
-    rows.push([3, 4, 5]);
-  }
-  // Show "more vehicles +" while server still has unloaded pages.
-  const hasMoreToShow = live ? (live.length < total) : false;
+  // Show placeholder skeletons ONLY while a request is in flight.
+  // Once the request settles and there are 0 curated picks for the
+  // selected (category, budget) combo, we hide the placeholders and
+  // render the empty-state block instead.
+  const isInitialLoading = dealsQ.isLoading || (dealsQ.isFetching && !dealsQ.data);
+  const showPlaceholders = !live && isInitialLoading;
+  const visibleCount = live ? live.length : (showPlaceholders ? 6 : 0);
+  const rows = useMemo(() => {
+    const out = [];
+    if (live) {
+      for (let i = 0; i < live.length; i += 3) out.push(live.slice(i, i + 3));
+    } else if (showPlaceholders) {
+      out.push([0, 1, 2]);
+      out.push([3, 4, 5]);
+    }
+    return out;
+  }, [live, showPlaceholders]);
 
-  // Reusable BIBI tilt-parallax for the car cards. The `:scope .${...}`
-  // selector reaches into both rows since the IO is one-shot per card.
-  // Pass `live` + `expanded` as deps so the hook re-attaches when async
-  // data arrives or the "More vehicles" toggle reveals additional cards.
+  // Reusable BIBI tilt-parallax for the car cards.
   const blockRef = useRef(null);
   useTiltParallax(blockRef, {
     cardsSelector: `:scope .${styles.carBlock}`,
     skipEntry: true,
-    deps: [live, loadedPages],
+    deps: [live],
   });
 
-  // Viewport observer for the section — flips `inView` once the deals
-  // grid scrolls into view, then triggers the stagger reveal.
+  // Viewport observer for the section.
   const [sectionRef, inView] = useInView();
-  // Track previously-revealed count so the second batch (cards 7-12)
-  // staggers independently of the first when the user clicks "More".
   const prevCountRef = useRef(6);
   const prevCount = prevCountRef.current;
   prevCountRef.current = visibleCount;
+
+  // Empty state when filter combo has no curated cards yet.
+  const isEmpty = !isInitialLoading && items.length === 0;
+
+  // Compose the catalog query string so "More vehicles +" preserves the
+  // user's current filter selection when jumping to the full catalog.
+  // CatalogPage parses `vehicle_type`, `price_min`, `price_max` from the
+  // URL on mount (see DEFAULT_FILTERS in CatalogPage.jsx), so we map the
+  // wishlist filter shape into the catalogue's URL contract.
+  const catalogHref = useMemo(() => {
+    const qs = new URLSearchParams();
+    if (category) qs.set("vehicle_type", category);
+    if (budget) {
+      const m = /^(\d+)\s*-\s*(\d+)K$/i.exec(String(budget));
+      if (m) {
+        qs.set("price_min", String(Number(m[1]) * 1000));
+        qs.set("price_max", String(Number(m[2]) * 1000));
+      }
+    }
+    const tail = qs.toString();
+    return tail ? `/catalog?${tail}` : "/catalog";
+  }, [category, budget]);
 
   return (
     <div ref={sectionRef} className={[styles.cardsBlockWrapper, className, inView ? "is-visible" : ""].join(" ")}>
@@ -179,10 +212,6 @@ const FrameComponent21 = ({ className = "" }) => {
               const cardIdx = ri * 3 + ci;
               const isFresh = cardIdx >= prevCount;
               const delayIdx = isFresh ? (cardIdx - prevCount) : (cardIdx % 6);
-              /* 140 ms stagger step (instead of 100 ms) gives a clearly
-               * visible left-to-right wave across the 3-card row — same
-               * timing language as the hero per-char wave and the
-               * filter-row chips above. */
               const animStyle = { animationDelay: `${delayIdx * 140}ms` };
               if (live) {
                 const v = cell;
@@ -190,7 +219,8 @@ const FrameComponent21 = ({ className = "" }) => {
                   <section
                     className={`${styles.carBlock} reveal reveal--fade-up`}
                     style={animStyle}
-                    key={v.vin || `${ri}-${ci}`}
+                    key={v.vin || v.id || `${ri}-${ci}`}
+                    data-testid={`top-deals-card-${v.vin || v.id}`}
                   >
                     <Card1
                       data={v}
@@ -217,34 +247,55 @@ const FrameComponent21 = ({ className = "" }) => {
           </div>
         ))}
 
-        {hasMoreToShow && (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "32px 0 0", gap: 6 }}>
-            <button
-              type="button"
-              onClick={onLoadMore}
-              disabled={loadingMore}
-              data-testid="top-deals-more-toggle"
-              style={{
-                background: "transparent", border: 0, color: "#FEAE00",
-                fontFamily: "var(--font-mazzard)", fontSize: 18, fontWeight: 500,
-                letterSpacing: "0.06em", textTransform: "uppercase",
-                textDecoration: "underline", cursor: loadingMore ? "wait" : "pointer", padding: "8px 12px",
-                opacity: loadingMore ? 0.5 : 1,
-              }}
-            >
-              {loadingMore
-                ? (isBg ? "зареждам…" : "loading…")
-                : (isBg ? "още автомобили +" : "more vehicles +")}
-            </button>
-            {total > 0 && (
-              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", letterSpacing: "0.04em" }}>
-                {isBg
-                  ? `${visibleCount} / ${total} автомобила`
-                  : `${visibleCount} of ${total} vehicles`}
-              </div>
-            )}
+        {/* Empty state when no curated cards match the current filters */}
+        {isEmpty && (
+          <div
+            data-testid="top-deals-empty"
+            style={{
+              padding: "40px 24px",
+              textAlign: "center",
+              color: "rgba(255,255,255,0.75)",
+              fontFamily: "var(--font-mazzard)",
+            }}
+          >
+            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>
+              {isBg
+                ? "Все още няма селекция за тази седмица"
+                : "No curated picks for this combo yet"}
+            </div>
+            <div style={{ fontSize: 14, opacity: 0.75, marginBottom: 18, maxWidth: 520, margin: "0 auto 18px" }}>
+              {isBg
+                ? "Изберете друг бюджет или категория, или прегледайте целия каталог."
+                : "Pick another category or budget — or browse the full catalog below."}
+            </div>
           </div>
         )}
+
+        {/* "MORE WISH LIST" → jumps to the full catalog (preserves filters as query params). */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "32px 0 0", gap: 6 }}>
+          <Link
+            to={catalogHref}
+            data-testid="top-deals-more-link"
+            style={{
+              background: "transparent", border: 0, color: "#FEAE00",
+              fontFamily: "var(--font-mazzard)", fontSize: 18, fontWeight: 500,
+              letterSpacing: "0.06em", textTransform: "uppercase",
+              textDecoration: "underline", cursor: loadingMore ? "wait" : "pointer", padding: "8px 12px",
+              opacity: loadingMore ? 0.5 : 1,
+            }}
+          >
+            {loadingMore
+              ? (isBg ? "зареждам…" : "loading…")
+              : (isBg ? "още автомобили +" : "more vehicles +")}
+          </Link>
+          {total > 0 && (
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", letterSpacing: "0.04em" }}>
+              {isBg
+                ? `${total} селекции за тази седмица`
+                : `${total} curated pick${total === 1 ? "" : "s"} this week`}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

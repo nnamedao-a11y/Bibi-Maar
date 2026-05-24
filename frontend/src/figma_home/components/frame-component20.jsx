@@ -40,15 +40,16 @@ const PRICE_TIERS = [
   { label: "30-50K", min: 30000, max: 50000 },
 ];
 
-const FrameComponent20 = ({ className = "", onChange }) => {
+const FrameComponent20 = ({ className = "", onChange, countOverride }) => {
   const { lang } = useLang();
   const isBg = lang === "bg";
   const [vehicle, setVehicle] = useState("sedan");
   const [tierLabel, setTierLabel] = useState("10-15K");
-  /* Real-time count of cars matching the current vehicle + tier
-   * filter. Pulled from the backend via /api/public/vehicles total.
-   * `null` while the first request is in-flight so we can show a
-   * subtle dash placeholder ("—") instead of a flashing "0". */
+  /* Real-time count of curated wishlist picks matching the current
+   * vehicle + tier filter. When the parent passes `countOverride` we
+   * use it directly (lock-step with the FrameComponent21 grid). If
+   * the parent doesn't supply it (legacy usage) we fall back to the
+   * full-catalogue total so the counter is never blank. */
   const [count, setCount] = useState(null);
 
   const selectVehicle = (id) => {
@@ -94,8 +95,12 @@ const FrameComponent20 = ({ className = "", onChange }) => {
     return () => controller.abort();
   }, []);
 
-  /* Render count safely: dash while loading, otherwise the real number. */
-  const countLabel = count == null ? "—" : String(count);
+  /* Render count safely: dash while loading, otherwise the real number.
+   * Prefer the parent-supplied `countOverride` so the counter mirrors
+   * exactly what the curated wishlist grid renders. */
+  const countLabel = countOverride != null
+    ? String(countOverride)
+    : (count == null ? "—" : String(count));
 
   /* Site-wide reveal: animate the chips + counter when the filter row
    * scrolls into view. Uses the same `data-stagger` + `is-visible`
