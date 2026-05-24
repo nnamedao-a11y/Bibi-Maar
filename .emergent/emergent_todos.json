@@ -1,0 +1,38 @@
+[
+  {
+    "content": "Backup current /app .env files",
+    "status": "completed"
+  },
+  {
+    "content": "Copy repo code from /tmp/repo to /app (preserve .env)",
+    "status": "completed"
+  },
+  {
+    "content": "Inspect server.py imports/config requirements",
+    "status": "completed"
+  },
+  {
+    "content": "Install/sync backend Python dependencies",
+    "status": "completed"
+  },
+  {
+    "content": "Install/sync frontend Node dependencies (+ fix missing @babel/helper-validator-identifier)",
+    "status": "completed"
+  },
+  {
+    "content": "Restart supervisor services (backend + frontend)",
+    "status": "completed"
+  },
+  {
+    "content": "Verify backend starts (8 workers running, /api/public/* returns 200 with real data)",
+    "status": "completed"
+  },
+  {
+    "content": "Verify frontend builds and loads (compiled successfully, home + catalog render)",
+    "status": "completed"
+  },
+  {
+    "content": "End-to-end smoke check via preview URL",
+    "status": "completed"
+  }
+]

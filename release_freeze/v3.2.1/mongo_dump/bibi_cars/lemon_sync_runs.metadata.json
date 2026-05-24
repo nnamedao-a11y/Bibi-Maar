@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"started_at":{"$numberInt":"-1"}},"name":"started_at_-1"}],"uuid":"b8172f1e2c4a4edb9152d4640f736e64","collectionName":"lemon_sync_runs","type":"collection"}

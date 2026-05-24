@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"id":{"$numberInt":"1"}},"name":"id_1","unique":true},{"v":{"$numberInt":"2"},"key":{"kind":{"$numberInt":"1"},"active":{"$numberInt":"1"}},"name":"kind_1_active_1"}],"uuid":"390f3251006c4e0bab4b6f9df6a46521","collectionName":"invoice_templates","type":"collection"}

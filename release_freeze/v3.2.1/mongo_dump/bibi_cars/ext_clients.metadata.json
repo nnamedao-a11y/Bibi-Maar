@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"clientId":{"$numberInt":"1"}},"name":"uniq_ext_clientId","unique":true},{"v":{"$numberInt":"2"},"key":{"managerEmail":{"$numberInt":"1"}},"name":"idx_ext_clients_email"}],"uuid":"39696a51ad8a46dc9fac960ab6e31dba","collectionName":"ext_clients","type":"collection"}

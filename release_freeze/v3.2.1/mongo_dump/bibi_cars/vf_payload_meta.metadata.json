@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"storedAt":{"$numberInt":"1"}},"name":"vf_meta_ttl_7d","expireAfterSeconds":{"$numberInt":"604800"}}],"uuid":"201f878ea5af49ec8e0b7697bc4ab329","collectionName":"vf_payload_meta","type":"collection"}
