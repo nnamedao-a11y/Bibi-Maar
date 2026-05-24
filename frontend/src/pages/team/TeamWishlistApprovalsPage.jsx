@@ -13,7 +13,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   CheckCircle,
   XCircle,
@@ -22,8 +22,11 @@ import {
   CheckSquare,
   Square,
   Sparkle,
+  Plus,
+  X,
 } from '@phosphor-icons/react';
 import { useLang } from '../../i18n';
+import WishlistDealForm from '../../components/wishlist/WishlistDealForm';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -41,6 +44,9 @@ const TeamWishlistApprovalsPage = () => {
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState(new Set());
   const [tab, setTab] = useState('pending');
+  // Модал создания: тимлид по основе апрувит, но может и сам создать
+  // карточку — этой же кнопкой, без перехода на отдельную страницу.
+  const [createOpen, setCreateOpen] = useState(false);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -189,6 +195,13 @@ const TeamWishlistApprovalsPage = () => {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setCreateOpen(true)}
+            data-testid="open-create-top-deal"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-400 text-[#18181B] font-semibold hover:bg-amber-300 transition"
+          >
+            <Plus size={16} weight="bold" /> Create Top Deal
+          </button>
           <button
             onClick={() => bulkApprove(true)}
             disabled={busy || counts.pending === 0}
@@ -351,6 +364,57 @@ const TeamWishlistApprovalsPage = () => {
           </div>
         )}
       </div>
+      {/* Create Top Deal modal — same form as /manager/wishlist, available
+          right here so team-lead can publish their own pick without
+          leaving the approvals page. */}
+      <AnimatePresence>
+        {createOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-3 sm:p-6"
+            onClick={() => setCreateOpen(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.98 }}
+              className="bg-white rounded-2xl w-full max-w-3xl max-h-[92vh] overflow-hidden flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+              data-testid="create-top-deal-modal"
+            >
+              <div className="px-5 py-4 border-b border-[#E4E4E7] flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkle size={18} className="text-amber-500" weight="fill" />
+                  <h3 className="font-semibold text-[#18181B] text-lg">New curated pick</h3>
+                </div>
+                <button
+                  onClick={() => setCreateOpen(false)}
+                  data-testid="close-create-top-deal"
+                  className="p-2 rounded-lg hover:bg-[#F4F4F5]"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="p-5 overflow-auto">
+                <WishlistDealForm
+                  compact
+                  showCancel
+                  onCancel={() => setCreateOpen(false)}
+                  onCreated={() => {
+                    setCreateOpen(false);
+                    // Свежесозданная карточка имеет status=pending → переключаем
+                    // на вкладку Pending и обновляем список.
+                    setTab('pending');
+                    fetchItems();
+                  }}
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

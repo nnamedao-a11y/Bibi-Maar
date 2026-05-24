@@ -27,7 +27,8 @@ import {
   Target,
   Hourglass,
   CheckCircle,
-  XCircle
+  XCircle,
+  Sparkle
 } from '@phosphor-icons/react';
 import RefreshButton from '../../components/ui/RefreshButton';
 
@@ -47,6 +48,10 @@ const TeamDashboardPage = () => {
   const [alerts, setAlerts] = useState([]);
   const [overdueInvoices, setOverdueInvoices] = useState([]);
   const [shipmentIssues, setShipmentIssues] = useState([]);
+  // Top Deals approval queue — pending count is shown as a KPI card and a
+  // dedicated alert widget so the team lead immediately sees there is
+  // outstanding curation work waiting for them.
+  const [topDealsPending, setTopDealsPending] = useState(0);
 
   useEffect(() => {
     fetchDashboardData();
@@ -54,12 +59,14 @@ const TeamDashboardPage = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const [kpiRes, managersRes, alertsRes, invoicesRes, shipmentsRes] = await Promise.all([
+      const [kpiRes, managersRes, alertsRes, invoicesRes, shipmentsRes, wishlistRes] = await Promise.all([
         axios.get(`${API_URL}/api/team/dashboard`).catch(() => ({ data: { kpi: {} } })),
         axios.get(`${API_URL}/api/team/managers`).catch(() => ({ data: [] })),
         axios.get(`${API_URL}/api/team/alerts`).catch(() => ({ data: [] })),
         axios.get(`${API_URL}/api/team/payments/overdue`).catch(() => ({ data: [] })),
         axios.get(`${API_URL}/api/team/shipping/stalled`).catch(() => ({ data: [] })),
+        axios.get(`${API_URL}/api/team-lead/wishlist-deals`, { params: { status: 'pending' } })
+          .catch(() => ({ data: { counts: { pending: 0 } } })),
       ]);
 
       setKpi(kpiRes.data?.kpi || kpiRes.data || {});
@@ -71,6 +78,7 @@ const TeamDashboardPage = () => {
       setOverdueInvoices(Array.isArray(invoicesData) ? invoicesData : []);
       const shipmentsData = shipmentsRes.data?.data || shipmentsRes.data || [];
       setShipmentIssues(Array.isArray(shipmentsData) ? shipmentsData : []);
+      setTopDealsPending(Number(wishlistRes?.data?.counts?.pending) || 0);
     } catch (err) {
       console.error('Dashboard error:', err);
     } finally {
@@ -141,6 +149,62 @@ const TeamDashboardPage = () => {
         <KPICard icon={CreditCard} label={t('overdueInvoices')} value={kpi.overdueInvoices || 0} color={kpi.overdueInvoices > 0 ? '#DC2626' : '#18181B'} alert={kpi.overdueInvoices > 0} />
         <KPICard icon={Truck} label={t('stalledShipments')} value={kpi.stalledShipments || 0} color={kpi.stalledShipments > 0 ? '#DC2626' : '#18181B'} alert={kpi.stalledShipments > 0} />
       </div>
+
+      {/* Top Deals approval queue — outstanding tasks for the team lead.
+          Always shown so the team lead sees both the "empty" healthy state
+          and the "N waiting" alert state at a glance. */}
+      <Link
+        to="/team/wishlist-approvals"
+        data-testid="td-approvals-widget"
+        className={`block rounded-2xl border p-5 transition group ${
+          topDealsPending > 0
+            ? 'bg-gradient-to-r from-amber-50 to-rose-50 border-amber-200 hover:border-amber-300'
+            : 'bg-white border-[#E4E4E7] hover:border-[#A1A1AA]'
+        }`}
+      >
+        <div className="flex items-center gap-4">
+          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${
+            topDealsPending > 0 ? 'bg-amber-100' : 'bg-[#F4F4F5]'
+          }`}>
+            <Sparkle
+              size={28}
+              weight={topDealsPending > 0 ? 'fill' : 'duotone'}
+              className={topDealsPending > 0 ? 'text-amber-600' : 'text-[#71717A]'}
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-semibold text-[#18181B] text-base">
+                Top Deals approval queue
+              </h3>
+              {topDealsPending > 0 && (
+                <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-amber-500 text-white">
+                  Action required
+                </span>
+              )}
+            </div>
+            <div className="text-sm text-[#71717A] mt-1">
+              {topDealsPending > 0 ? (
+                <>
+                  <span className="font-semibold text-amber-700">
+                    {topDealsPending} card{topDealsPending === 1 ? '' : 's'}
+                  </span>{' '}
+                  waiting for your approval — go in and bulk-approve to ship the homepage update.
+                </>
+              ) : (
+                'No pending wishlist cards — homepage is up to date.'
+              )}
+            </div>
+          </div>
+          <div className="text-right">
+            <div className={`text-4xl font-bold ${topDealsPending > 0 ? 'text-amber-700' : 'text-[#18181B]'}`}>
+              {topDealsPending}
+            </div>
+            <div className="text-[10px] uppercase tracking-wider text-[#71717A]">pending</div>
+          </div>
+          <ArrowRight size={22} className="text-[#71717A] group-hover:text-[#18181B] group-hover:translate-x-1 transition" />
+        </div>
+      </Link>
 
       {/* Manager Load Board */}
       <div className="bg-white rounded-2xl border border-[#E4E4E7] overflow-hidden">

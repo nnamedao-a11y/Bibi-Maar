@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
 import { API_URL } from '../App';
 import { useLang, getLocale } from '../i18n';
 import { motion } from 'framer-motion';
@@ -28,7 +29,9 @@ import {
   PhoneCall,
   UserPlus,
   TrendUp,
-  Briefcase
+  Briefcase,
+  Sparkle,
+  ArrowRight
 } from '@phosphor-icons/react';
 
 const Dashboard = () => {
@@ -36,9 +39,17 @@ const Dashboard = () => {
   const [masterData, setMasterData] = useState(null);
   const [period, setPeriod] = useState('day');
   const [loading, setLoading] = useState(true);
+  // Висящие Top Deals на апрув — отдельный виджет, чтобы тимлид сразу
+  // видел задачу, а не искал её во вкладке. Загружается параллельно
+  // с основным дашбордом, ошибка не блокирует страницу.
+  const [topDealsPending, setTopDealsPending] = useState(0);
 
   useEffect(() => {
     fetchMasterDashboard();
+    // pending апрувов не зависит от period — тянем отдельно
+    axios.get(`${API_URL}/api/team-lead/wishlist-deals`, { params: { status: 'pending' } })
+      .then((r) => setTopDealsPending(Number(r?.data?.counts?.pending) || 0))
+      .catch(() => setTopDealsPending(0));
   }, [period]);
 
   const fetchMasterDashboard = async () => {
@@ -144,6 +155,62 @@ const Dashboard = () => {
           color={system.failedJobs > 0 ? "#DC2626" : "#18181B"}
         />
       </div>
+
+      {/* Top Deals approval queue — visible alert for the team lead so
+          they immediately see that there is curated-wishlist work
+          waiting. Empty/healthy state is also shown explicitly. */}
+      <Link
+        to="/team/wishlist-approvals"
+        data-testid="td-approvals-widget"
+        className={`block rounded-2xl border p-4 sm:p-5 mb-6 lg:mb-8 transition group ${
+          topDealsPending > 0
+            ? 'bg-gradient-to-r from-amber-50 to-rose-50 border-amber-200 hover:border-amber-300'
+            : 'bg-white border-[#E4E4E7] hover:border-[#A1A1AA]'
+        }`}
+      >
+        <div className="flex items-center gap-4">
+          <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${
+            topDealsPending > 0 ? 'bg-amber-100' : 'bg-[#F4F4F5]'
+          }`}>
+            <Sparkle
+              size={26}
+              weight={topDealsPending > 0 ? 'fill' : 'duotone'}
+              className={topDealsPending > 0 ? 'text-amber-600' : 'text-[#71717A]'}
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-semibold text-[#18181B] text-base">
+                Top Deals approval queue
+              </h3>
+              {topDealsPending > 0 && (
+                <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-amber-500 text-white">
+                  Action required
+                </span>
+              )}
+            </div>
+            <div className="text-sm text-[#71717A] mt-1">
+              {topDealsPending > 0 ? (
+                <>
+                  <span className="font-semibold text-amber-700">
+                    {topDealsPending} card{topDealsPending === 1 ? '' : 's'}
+                  </span>{' '}
+                  waiting for your approval — bulk-approve to ship the homepage update.
+                </>
+              ) : (
+                'No pending wishlist cards — homepage is up to date.'
+              )}
+            </div>
+          </div>
+          <div className="text-right">
+            <div className={`text-3xl sm:text-4xl font-bold ${topDealsPending > 0 ? 'text-amber-700' : 'text-[#18181B]'}`}>
+              {topDealsPending}
+            </div>
+            <div className="text-[10px] uppercase tracking-wider text-[#71717A]">pending</div>
+          </div>
+          <ArrowRight size={20} className="text-[#71717A] group-hover:text-[#18181B] group-hover:translate-x-1 transition hidden sm:block" />
+        </div>
+      </Link>
 
       {/* Main Grid - Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5 mb-4 lg:mb-5">

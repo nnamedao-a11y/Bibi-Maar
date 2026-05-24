@@ -323,12 +323,14 @@ const Layout = () => {
       roles: ['master_admin', 'admin', 'team_lead', 'manager']
     },
     {
-      // Top Deals of the Week — manager-curated homepage wishlist
-      // builder. Cards go to team-lead for approval.
+      // «Top Deals Builder» — основная рабочая страница менеджера для
+      // подборок. У тимлида/админа есть та же логика прямо внутри
+      // «Top Deals Approvals» (кнопка «+ Create Top Deal»), поэтому
+      // отдельный пункт меню им НЕ нужен, чтобы не плодить дубли.
       id: 'managerWishlist',
       type: 'single',
       item: { path: '/manager/wishlist', icon: Fire, labelKey: 'topDealsBuilder' },
-      roles: ['master_admin', 'admin', 'team_lead', 'manager']
+      roles: ['master_admin', 'manager']
     },
     {
       // Team-lead approval queue for the wishlist cards above.
