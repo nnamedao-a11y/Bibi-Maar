@@ -104,6 +104,33 @@ const ManagerWorkspacePage = () => {
       {/* Provider Pressure self-view */}
       <ProviderHealthWidget className="max-w-md" />
 
+      {/* Customer engagement entry point — quick link to the read-only
+          engagement dashboard so managers can see which cars customers
+          favorited / compared / shared and follow up before the lead cools. */}
+      <Link
+        to="/manager/engagement"
+        data-testid="manager-engagement-cta"
+        className="block bg-gradient-to-r from-rose-50 to-amber-50 border border-rose-100 rounded-2xl p-4 sm:p-5 hover:border-rose-200 hover:shadow-sm transition group"
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-white border border-rose-100 flex items-center justify-center flex-shrink-0">
+            <Eye size={22} className="text-rose-600" weight="duotone" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-[#18181B] flex items-center gap-2">
+              {t('userEngagement') || 'Customer engagement'}
+              <span className="text-[10px] uppercase tracking-wider bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full">
+                read-only
+              </span>
+            </div>
+            <div className="text-xs text-[#71717A] mt-1">
+              Favorites · Comparisons · Shares — see who is hot to call right now.
+            </div>
+          </div>
+          <ArrowRight size={20} className="text-[#71717A] group-hover:text-[#18181B] group-hover:translate-x-1 transition flex-shrink-0" />
+        </div>
+      </Link>
+
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <QuickStat icon={Fire} label={t('hotLeads')} value={hotLeads.length} color="#DC2626" alert={hotLeads.length > 0} />

@@ -3802,6 +3802,14 @@ except Exception as _e:
     logger.exception("[admin_engagement] failed to mount router: %s", _e)
 
 try:
+    from app.routers import manager_engagement as _manager_engagement_mod
+    fastapi_app.include_router(_manager_engagement_mod.router)
+    logger.info("[manager_engagement] router mounted: %d routes",
+                sum(1 for _ in _manager_engagement_mod.router.routes))
+except Exception as _e:
+    logger.exception("[manager_engagement] failed to mount router: %s", _e)
+
+try:
     from app.routers import admin_overview as _admin_overview_mod
     fastapi_app.include_router(_admin_overview_mod.router)
     logger.info("[admin_overview] router mounted: %d routes",

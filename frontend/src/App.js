@@ -133,6 +133,7 @@ import TeamPerformancePage from './pages/team/TeamPerformancePage';
 import ManagerWorkspacePage from './pages/manager/ManagerWorkspacePage';
 import ManagerShipmentsPage from './pages/manager/ManagerShipmentsPage';
 import UniversalTrackerPage from './pages/manager/UniversalTrackerPage';
+import ManagerEngagementPage from './pages/manager/ManagerEngagementPage';
 
 import NotificationsPage from './pages/NotificationsPage';
 import ParserTestLab from './pages/ParserTestLab';
@@ -541,6 +542,7 @@ function App() {
               <Route path="orders" element={<ManagerOrdersPage />} />
               <Route path="shipments" element={<ManagerShipmentsPage />} />
               <Route path="tracking" element={<UniversalTrackerPage />} />
+              <Route path="engagement" element={<ManagerEngagementPage />} />
             </Route>
 
             {/* ====== CUSTOMER CABINET (CLIENT PORTAL) ====== */}

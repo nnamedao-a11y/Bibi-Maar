@@ -1,38 +1,42 @@
 [
   {
-    "content": "Backup current /app .env files",
+    "content": "Bug fix: FavoritesPage CTA — /vehicles → /catalog",
     "status": "completed"
   },
   {
-    "content": "Copy repo code from /tmp/repo to /app (preserve .env)",
+    "content": "Create backend router manager_engagement.py (5 read-only endpoints, require_manager_or_admin)",
     "status": "completed"
   },
   {
-    "content": "Inspect server.py imports/config requirements",
+    "content": "Mount manager_engagement router in server.py",
     "status": "completed"
   },
   {
-    "content": "Install/sync backend Python dependencies",
+    "content": "Create frontend ManagerEngagementPage.jsx (KPIs, VIN lookup, top users, top vehicles, customer drill-down modal)",
     "status": "completed"
   },
   {
-    "content": "Install/sync frontend Node dependencies (+ fix missing @babel/helper-validator-identifier)",
+    "content": "Wire /manager/engagement route in App.js",
     "status": "completed"
   },
   {
-    "content": "Restart supervisor services (backend + frontend)",
+    "content": "Add 'User Engagement' sidebar entry for manager role in Layout.js",
     "status": "completed"
   },
   {
-    "content": "Verify backend starts (8 workers running, /api/public/* returns 200 with real data)",
+    "content": "Add User Engagement CTA card on ManagerWorkspacePage dashboard",
     "status": "completed"
   },
   {
-    "content": "Verify frontend builds and loads (compiled successfully, home + catalog render)",
+    "content": "Restart backend, verify routes mount (5 routes log line confirmed)",
     "status": "completed"
   },
   {
-    "content": "End-to-end smoke check via preview URL",
+    "content": "Smoke test: 5/5 endpoints return 200 with manager token, 401 without",
+    "status": "completed"
+  },
+  {
+    "content": "Visual verification: manager logged in, page renders with sidebar + KPIs + tabs + customer row",
     "status": "completed"
   }
 ]

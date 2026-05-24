@@ -313,6 +313,16 @@ const Layout = () => {
       roles: ['master_admin', 'admin', 'team_lead', 'manager']
     },
     {
+      // Customer engagement read-only view for managers — mirrors the
+      // admin /admin/engagement page so non-admin staff can see which
+      // cars customers favorited / compared / shared. Read-only — campaign
+      // sending and template editing stay admin-only.
+      id: 'managerEngagement',
+      type: 'single',
+      item: { path: '/manager/engagement', icon: Heart, labelKey: 'userEngagement' },
+      roles: ['master_admin', 'admin', 'team_lead', 'manager']
+    },
+    {
       id: 'control',
       type: 'single',
       // Control is a hub. The page itself renders a horizontal sub-nav at
